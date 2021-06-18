@@ -2,12 +2,22 @@ import pygame
 from pygame.locals import *
 import time
 import random
-#from ctypes.windll import user32
+import ctypes
 
 #Creating global variables
 SIZE = 40
 SNAKE_SPEED = .1
 WHITE = (255,255,255)
+
+# Getting screen size
+user32 = ctypes.windll.user32
+#user32.SetProcessDPIAware()
+system_w, system_h = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
+w = system_w // 40
+h = system_h // 40
+w = (w-12)*40
+h = (h-3)*40
+
 
 class Apple:
     def __init__(self, parent_screen):
@@ -21,8 +31,8 @@ class Apple:
         pygame.display.flip()
 
     def move(self):
-        self.x = random.randint(1,22)*SIZE
-        self.y = random.randint(1,17)*SIZE
+        self.x = random.randint(1,(w/40)-2)*SIZE
+        self.y = random.randint(1,(h/40)-2)*SIZE
 
 class Snake:
     def __init__(self, parent_screen):
@@ -119,7 +129,8 @@ class Game:
         pygame.mixer.init()
         self.play_background_music()
 
-        self.surface = pygame.display.set_mode((1000, 760))
+        #self.surface = pygame.display.set_mode((1000, 760))
+        self.surface = pygame.display.set_mode((w, h))
         self.snake = Snake(self.surface)
         self.snake.draw()
         self.apple = Apple(self.surface)
@@ -152,7 +163,7 @@ class Game:
 
     def render_background(self):
         bg = pygame.image.load("Resources/background.jpg").convert_alpha()
-        bg = pygame.transform.smoothscale(bg, (1000, 760))
+        bg = pygame.transform.smoothscale(bg, (w, h))
         self.surface.blit(bg, (0,0))
 
     def play(self):
@@ -160,6 +171,12 @@ class Game:
         self.snake.walk()
         #self.apple.draw()
         self.display_score()
+
+        font = pygame.font.SysFont('arial',15)
+        pause_msg = font.render("Press Space to Pause and Enter to Continue",True, WHITE)
+        self.surface.blit(pause_msg,(750,40))
+        #pygame.display.flip()
+        
         pygame.display.flip()
 
         # snake eating apple scenario
@@ -185,7 +202,7 @@ class Game:
                 raise "Collision Occurred"
 
         # checking if snake is colliding with boundries
-        if not (0 <= self.snake.x[0] <= 960 and 0 <= self.snake.y[0] <= 720):
+        if not (0 <= self.snake.x[0] <= w-40 and 0 <= self.snake.y[0] <= h-40):
             self.play_sound('crash')
             raise "Hit the boundry"
 
@@ -193,6 +210,7 @@ class Game:
         font = pygame.font.SysFont('arial',30)
         score = font.render(f"Score: {self.snake.length-4}",True, WHITE)
         self.surface.blit(score,(850,10))
+
 
     def show_game_over(self):
         # Storing High score
